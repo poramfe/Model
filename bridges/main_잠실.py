@@ -62,13 +62,14 @@ tracker = EuclideanDistTracker()
 
 frame_counter = 0
 total_id_10sec_ago = 0
+cars_per_minute_list = []
 
 while True:
     return_value, frame = capture.read()
     if return_value == False: break
 
     frame_Region_of_Interest = frame[900:960, 800:1000]
-    frame_Region_of_Interest += 50
+    # frame_Region_of_Interest += 50
 
     MoG_mask = object_detector.apply(image=frame_Region_of_Interest)
     brightness, MoG_mask = cv2.threshold(src=MoG_mask, thresh=64, maxval=255, type=cv2.THRESH_BINARY)
@@ -92,7 +93,8 @@ while True:
     frame_counter += 1
     current_total_id = id
     if frame_counter % 3600 == 0:
-        print(f"{(current_total_id - total_id_10sec_ago) / 1} cars per 1 minute")
+        print(f"{(current_total_id - total_id_10sec_ago)} cars per minute")
+        cars_per_minute_list.append(current_total_id - total_id_10sec_ago)
         total_id_10sec_ago = id
 
     cv2.imshow(winname="JamSil Bridge", mat=frame)
@@ -103,3 +105,10 @@ while True:
 
 capture.release()
 cv2.destroyAllWindows()
+
+"""make the file"""
+with open(file="bridges/measured_list/잠실.txt", mode='w') as file:
+    file.write("minute\tcars/min\n")
+    for i in range(len(cars_per_minute_list)):
+        file.write(f"{i+1}\t\t{cars_per_minute_list[i]}\n")
+    file.write(f"\nmean : {round(number=sum(cars_per_minute_list) / len(cars_per_minute_list), ndigits=3)}")

@@ -58,11 +58,12 @@ class EuclideanDistTracker:
 upload_url = "http://localhost:4000/api/videos/upload"
 
 capture = cv2.VideoCapture(filename="./bridges/dataset/반포대교/2023-10-24 17-36-29bothway.mov")
-object_detector = cv2.createBackgroundSubtractorMOG2(history=240, varThreshold=32, detectShadows=True)
+object_detector = cv2.createBackgroundSubtractorMOG2(history=600, varThreshold=32, detectShadows=True)
 tracker = EuclideanDistTracker()
 
 frame_counter = 0
 total_id_10sec_ago = 0
+cars_per_minute_list = []
 
 while True:
     return_value, frame = capture.read()
@@ -95,7 +96,8 @@ while True:
     frame_counter += 1
     current_total_id = id
     if frame_counter % 3600 == 0:
-        print(f"{(current_total_id - total_id_10sec_ago) / 1} cars per 1 minute")
+        print(f"{(current_total_id - total_id_10sec_ago)} cars per minute")
+        cars_per_minute_list.append(current_total_id - total_id_10sec_ago)
         total_id_10sec_ago = id
 
     cv2.imshow(winname="BanPo Bridge", mat=frame)
@@ -106,3 +108,10 @@ while True:
 
 capture.release()
 cv2.destroyAllWindows()
+
+"""make the file"""
+with open(file="bridges/measured_list/반포.txt", mode='w') as file:
+    file.write("minute\tcars/min\n")
+    for i in range(len(cars_per_minute_list)):
+        file.write(f"{i+1}\t\t{cars_per_minute_list[i]}\n")
+    file.write(f"\nmean : {round(number=sum(cars_per_minute_list) / len(cars_per_minute_list), ndigits=3)}")
